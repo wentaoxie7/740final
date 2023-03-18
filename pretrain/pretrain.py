@@ -1,8 +1,12 @@
+import copy
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.utils.data as data
 import torchvision
 import torchvision.transforms as transforms
+from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 from pathlib import Path
 
@@ -11,11 +15,11 @@ from pretrain import utils
 
 # hyperparameters
 dataset = 'cifar10'
-batch_size=512
+batch_size= 128
 val_batch_size=1000
 num_epochs=150
 learning_rate=2*1e-3
-val_ratio = 0.9
+val_ratio = 0.1
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -34,12 +38,9 @@ elif dataset == 'cifar100':
 else:
     raise ValueError("Dataset name has to be 'cifar10' or 'cifar100' ")
 
-n_train_examples = int(len(train_data) * val_ratio)
-n_val_examples = len(train_data) - n_train_examples
-
-train_data, val_data = data.random_split(train_data,
-                                    [n_train_examples, n_val_examples])
-
+targets = train_data.targets
+train_idx, val_idx = train_test_split(np.arange(len(targets)), test_size = 0.1, shuffle = True, stratify=targets)
+train_data, val_data = data.Subset(train_data, train_idx), copy.deepcopy(data.Subset(train_data, val_idx))
 cifar_stack = torch.stack([img for img, _ in train_data], dim=3)
 mean= cifar_stack.view(3,-1).mean(dim=1)
 std= cifar_stack.view(3,-1).std(dim=1)
@@ -75,10 +76,10 @@ def train():
     criterion = nn.CrossEntropyLoss()
     best_val_acc = 0
     
-    for epoch in tqdm(range(num_epochs)):
+    for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
-        for imgs, labels in train_loader:
+        for imgs, labels in tqdm(train_loader):
             imgs, labels = imgs.to(device), labels.to(device)
             optim.zero_grad()
             outputs = model(imgs)
