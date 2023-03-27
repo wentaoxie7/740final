@@ -1,2 +1,5 @@
 /venv
 /datasets
+/cifar10checkpoint
+/cifar100checkpoint
+__pycache__/
