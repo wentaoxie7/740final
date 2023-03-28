@@ -1,3 +1,6 @@
 [submodule "Transformaly"]
 	path = Transformaly
 	url = https://github.com/MatanCohen1/Transformaly.git
+[submodule "anomaly_detection/sspcab"]
+	path = anomaly_detection/sspcab
+	url = https://github.com/ristea/sspcab.git
