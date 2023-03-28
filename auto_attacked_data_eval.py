@@ -33,7 +33,7 @@ if __name__ == '__main__':
 	dataset = args.dataset
 	model_name = dataset+'_model.pt'
 	adversial_data_name = '{}_{}_{}_{}_10000_eps_{:.5f}.pth'.format(
-	            'aa', args.version, args.norm, args.dataset, args.epsilon)
+				'aa', args.version, args.norm, args.dataset, args.epsilon)
 
 	if dataset == 'cifar10':
 	    pass
@@ -82,7 +82,7 @@ if __name__ == '__main__':
 	        transforms.ToTensor(),
 	        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 	    ])
-	    item = torchvision.datasets.CIFAR10(root=args.data_dir, train=False, transform=transform_chain, download=True)
+		item = torchvision.datasets.CIFAR10(root=args.data_dir, train=False, transform=transform_chain, download=True)
 	    test_loader = data.DataLoader(item, batch_size=args.batch_size, shuffle=False, num_workers=4)
 	elif dataset == 'cifar100':
 	    transform_chain = transforms.Compose([

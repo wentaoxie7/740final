@@ -8,9 +8,19 @@ import sys
 import time
 import math
 
+import torch
 import torch.nn as nn
 import torch.nn.init as init
+import numpy as np
+import random
 
+def reproduce():
+    np.random.seed(1)
+    torch.manual_seed(1)
+    random.seed(1)
+    torch.cuda.manual_seed_all(1)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 def get_mean_and_std(dataset):
     '''Compute the mean and std value of dataset.'''
