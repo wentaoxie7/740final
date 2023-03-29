@@ -4,3 +4,6 @@
 [submodule "anomaly_detection/sspcab"]
 	path = anomaly_detection/sspcab
 	url = https://github.com/ristea/sspcab.git
+[submodule "anomaly_detection/pytorch-cutpaste"]
+	path = anomaly_detection/pytorch-cutpaste
+	url = https://github.com/Runinho/pytorch-cutpaste.git
