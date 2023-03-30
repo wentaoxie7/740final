@@ -30,3 +30,5 @@ class CIFAR100Data(torchvision.datasets.CIFAR100):
     def __getitem__(self, index):
         img, _ = super().__getitem__(index)
         return img
+    
+

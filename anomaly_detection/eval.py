@@ -18,7 +18,6 @@ from .Cutpaste.model import ProjectionNet
 from .Cutpaste.cutpaste import CutPaste, cut_paste_collate_fn
 from .Cutpaste.density import GaussianDensitySklearn, GaussianDensityTorch
 from .utils import str2bool
-from .train import train_data
 from .cifar import *
 
 test_data_eval = None
@@ -40,9 +39,9 @@ def get_train_data(data_path, transform, dataset = 'cifar10'):
 
 def get_train_embeds(model, data_path, transform, device, dataset = 'cifar10'):
     # train data / train kde
-    train_data = train_data(data_path, transform, dataset = dataset)
+    data = get_train_data(data_path, transform, dataset = dataset)
 
-    dataloader_train = DataLoader(train_data, batch_size=64,
+    dataloader_train = DataLoader(data, batch_size=64,
                             shuffle=False, num_workers=4)
     train_embed = []
     model.to(device)
@@ -53,7 +52,7 @@ def get_train_embeds(model, data_path, transform, device, dataset = 'cifar10'):
     train_embed = torch.cat(train_embed)
     return train_embed
 
-def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', device="cpu", save_plots=False, size=256, show_training_data=True, model=None, train_embed=None, head_layer=8, density=GaussianDensityTorch()):
+def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', device="cpu", save_plots=False, size=256, show_training_data=True, model=None, train_embed=None, density=GaussianDensityTorch()):
     # create test dataset
     test_transform = transforms.Compose([])
     test_transform.transforms.append(transforms.Resize((size,size)))
@@ -69,13 +68,12 @@ def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', device="c
         test_data = CIFAR100Data(
         root= data_path, train=False, download=True, transform = test_transform)
     
-    adv_path = Path(__file__).parent.parent/'auto_attack_gen_data'/f'aa_standard_{dist}_{dataset}_10000_eps_0.03137.pth'
-    adv_data = torch.load(adv_path)['adv_complete']
     target_len = len(test_data)
-    targets = [0] * target_len + [1] * target_len
-    data = test_data.data + adv_data
-    test_data = Dataset(targets, data, test_transform)
-    dataloader_test = DataLoader(test_data_eval, batch_size=64,
+    adv_path = Path(__file__).parent.parent/'auto_attack_gen_data'/f'aa_standard_{dist}_{dataset}_10000_eps_0.03137.pth'
+    adv_data = Dataset([1] * target_len, torch.load(adv_path)['adv_complete'], transforms.Resize((size,size)))
+    test_data = Dataset([0] * target_len, test_data)
+    data = torch.utils.data.ConcatDataset([test_data, adv_data])
+    dataloader_test = DataLoader(data, batch_size=64,
                                     shuffle=False, num_workers=4)
 
     # create model
@@ -104,7 +102,7 @@ def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', device="c
     embeds = torch.cat(embeds)
 
     if train_embed is None:
-        train_embed = get_train_embeds(model, data_path, device, test_transform, dataset = dataset)
+        train_embed = get_train_embeds(model, data_path, test_transform, device = device, dataset = dataset)
 
     # norm embeds
     embeds = torch.nn.functional.normalize(embeds, p=2, dim=1)
@@ -228,8 +226,12 @@ if __name__ == '__main__':
     parser.add_argument('--save_plots', default=False, type=str2bool,
                     help='save TSNE and roc plots')
     
+    parser.add_argument('--dataset', default = "cifar10", choices = ['cifar10', 'cifar100'])
+    
 
     args = parser.parse_args()
+
+    data_path = Path(__file__).parent.parent / 'datasets'
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -240,19 +242,15 @@ if __name__ == '__main__':
     density = density_mapping[args.density]
 
     # find models
-    model_names = [list(Path(args.model_dir).glob(f"model-{data_type}*"))[0] for data_type in types if len(list(Path(args.model_dir).glob(f"model-{data_type}*"))) > 0]
+    model_name = Path(__file__).parent.parent / 'models' / f'cutpaste_{args.dataset}.pth'
 
     obj = defaultdict(list)
-    for model_name, data_type in zip(model_names, types):
-        print(f"evaluating {data_type}")
-
-        roc_auc = eval_model(model_name, data_type, save_plots=args.save_plots, device=device, head_layer=args.head_layer, density=density())
-        print(f"{data_type} AUC: {roc_auc}")
-        obj["defect_type"].append(data_type)
-        obj["roc_auc"].append(roc_auc)
+    print(f"evaluating {args.dataset}")
+    roc_auc = eval_model(model_name, data_path, save_plots=args.save_plots, device=device, density=density())
+    print(f"AUC: {roc_auc}")
     
-    # save pandas dataframe
-    eval_dir = Path("eval") / args.model_dir
-    eval_dir.mkdir(parents=True, exist_ok=True)
-    df = pd.DataFrame(obj)
-    df.to_csv(str(eval_dir) + "_perf.csv")
+    # # save pandas dataframe
+    # eval_dir = Path("eval") / args.model_dir
+    # eval_dir.mkdir(parents=True, exist_ok=True)
+    # df = pd.DataFrame(obj)
+    # df.to_csv(str(eval_dir) + "_perf.csv")

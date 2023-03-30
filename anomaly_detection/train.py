@@ -75,6 +75,8 @@ def trainCutPaste(epoch, lr, size, batch_size, data_path, device = 'cpu', cutpas
     # train model
     for e in range(epoch):
         model.train()
+        total_loss = 0
+        total_num = 0
         for imgs in tqdm(dataloader):
             xs = [x.to(device) for x in imgs]
             xc = torch.cat(xs, dim=0)
@@ -85,7 +87,9 @@ def trainCutPaste(epoch, lr, size, batch_size, data_path, device = 'cpu', cutpas
             loss = loss_fn(logits, y)
             loss.backward()
             optimizer.step()
-        print(f'Epoch {e}, Loss {loss.item()}')
+            total_loss += loss.item() * len(xc)
+            total_num += len(xc)
+        print(f'Epoch {e}, Loss {total_loss / total_num}')
         scheduler.step()
     torch.save(model.state_dict(), f'./models/cutpaste_{dataset}.pth')
     
@@ -94,4 +98,4 @@ def trainCutPaste(epoch, lr, size, batch_size, data_path, device = 'cpu', cutpas
 if __name__ == '__main__':
     reproduce()
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    trainCutPaste(50, 0.03, 256, 6, Path(__file__).parent.parent/'datasets', device = device)
+    trainCutPaste(20, 0.03, 256, 32, Path(__file__).parent.parent/'datasets', device = device, dataset = 'cifar100')
