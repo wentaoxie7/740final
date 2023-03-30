@@ -19,6 +19,7 @@ from .Cutpaste.cutpaste import CutPaste, cut_paste_collate_fn
 from .Cutpaste.density import GaussianDensitySklearn, GaussianDensityTorch
 from .utils import str2bool
 from .train import train_data
+from .cifar import *
 
 test_data_eval = None
 test_transform = None
@@ -52,39 +53,39 @@ def get_train_embeds(model, data_path, transform, device, dataset = 'cifar10'):
     train_embed = torch.cat(train_embed)
     return train_embed
 
-def eval_model(modelname, dist = 'L2', dataset = 'cifar10', device="cpu", save_plots=False, size=256, show_training_data=True, model=None, train_embed=None, head_layer=8, density=GaussianDensityTorch()):
+def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', device="cpu", save_plots=False, size=256, show_training_data=True, model=None, train_embed=None, head_layer=8, density=GaussianDensityTorch()):
     # create test dataset
-    global test_data_eval,test_transform, cached_type
-
-    # TODO: cache is only nice during training. do we need it?
-   
     test_transform = transforms.Compose([])
-    #test_transform.transforms.append(transforms.Resize((size,size)))
+    test_transform.transforms.append(transforms.Resize((size,size)))
     test_transform.transforms.append(transforms.ToTensor())
     if dataset == 'cifar10':
         test_transform.transforms.append(transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                             std=[0.229, 0.224, 0.225]))
-        test_data = torchvision.datasets.CIFAR10(
-        root='Data', train=False, download=True, transform = test_transform)
+        test_data = CIFAR10Data(
+        root= data_path, train=False, download=True, transform = test_transform)
     elif dataset == 'cifar100':
         test_transform.transforms.append(transforms.Normalize(mean=[0.5071, 0.4867, 0.4408],
                                                             std=[0.2675, 0.2565, 0.2761]))
-        test_data = torchvision.datasets.CIFAR100(
-        root='Data', train=False, download=True, transform = test_transform)
+        test_data = CIFAR100Data(
+        root= data_path, train=False, download=True, transform = test_transform)
     
     adv_path = Path(__file__).parent.parent/'auto_attack_gen_data'/f'aa_standard_{dist}_{dataset}_10000_eps_0.03137.pth'
     adv_data = torch.load(adv_path)['adv_complete']
+    target_len = len(test_data)
+    targets = [0] * target_len + [1] * target_len
+    data = test_data.data + adv_data
+    test_data = Dataset(targets, data, test_transform)
     dataloader_test = DataLoader(test_data_eval, batch_size=64,
                                     shuffle=False, num_workers=4)
 
     # create model
     if model is None:
         print(f"loading model {modelname}")
-        head_layers = [512]*head_layer+[128]
-        print(head_layers)
+        # head_layers = [512]*head_layer+[128]
+        # print(head_layers)
         weights = torch.load(modelname)
         classes = weights["out.weight"].shape[0]
-        model = ProjectionNet(pretrained=False, head_layers=head_layers, num_classes=classes)
+        model = ProjectionNet(pretrained=False, num_classes=classes)
         model.load_state_dict(weights)
         model.to(device)
         model.eval()
@@ -103,7 +104,7 @@ def eval_model(modelname, dist = 'L2', dataset = 'cifar10', device="cpu", save_p
     embeds = torch.cat(embeds)
 
     if train_embed is None:
-        train_embed = get_train_embeds(model, size, defect_type, test_transform, device)
+        train_embed = get_train_embeds(model, data_path, device, test_transform, dataset = dataset)
 
     # norm embeds
     embeds = torch.nn.functional.normalize(embeds, p=2, dim=1)
@@ -217,51 +218,20 @@ def plot_tsne(labels, embeds, filename):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='eval models')
-    parser.add_argument('--type', default="all",
-                        help='MVTec defection dataset type to train seperated by , (default: "all": train all defect types)')
 
     parser.add_argument('--model_dir', default="models",
                     help=' directory contating models to evaluate (default: models)')
-    
-    parser.add_argument('--cuda', default=False, type=str2bool,
-                    help='use cuda for model predictions (default: False)')
-
-    parser.add_argument('--head_layer', default=8, type=int,
-                    help='number of layers in the projection head (default: 8)')
 
     parser.add_argument('--density', default="torch", choices=["torch", "sklearn"],
                     help='density implementation to use. See `density.py` for both implementations. (default: torch)')
 
-    parser.add_argument('--save_plots', default=True, type=str2bool,
+    parser.add_argument('--save_plots', default=False, type=str2bool,
                     help='save TSNE and roc plots')
     
 
     args = parser.parse_args()
-
-    args = parser.parse_args()
-    print(args)
-    all_types = ['bottle',
-             'cable',
-             'capsule',
-             'carpet',
-             'grid',
-             'hazelnut',
-             'leather',
-             'metal_nut',
-             'pill',
-             'screw',
-             'tile',
-             'toothbrush',
-             'transistor',
-             'wood',
-             'zipper']
     
-    if args.type == "all":
-        types = all_types
-    else:
-        types = args.type.split(",")
-    
-    device = "cuda" if args.cuda else "cpu"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     density_mapping = {
         "torch": GaussianDensityTorch,
@@ -271,8 +241,6 @@ if __name__ == '__main__':
 
     # find models
     model_names = [list(Path(args.model_dir).glob(f"model-{data_type}*"))[0] for data_type in types if len(list(Path(args.model_dir).glob(f"model-{data_type}*"))) > 0]
-    if len(model_names) < len(all_types):
-        print("warning: not all types present in folder")
 
     obj = defaultdict(list)
     for model_name, data_type in zip(model_names, types):
