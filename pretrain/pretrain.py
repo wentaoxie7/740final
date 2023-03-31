@@ -182,20 +182,6 @@ if __name__ == '__main__':
         net = ResNet(BasicBlock, [2, 2, 2, 2], 100) #cifar100 has 100 classes
     else:
         raise ValueError("Dataset name has to be 'cifar10' or 'cifar100' ")
-    # net = VGG('VGG19')
-    # net = PreActResNet18()
-    # net = GoogLeNet()
-    # net = DenseNet121()
-    # net = ResNeXt29_2x64d()
-    # net = MobileNet()
-    # net = MobileNetV2()
-    # net = DPN92()
-    # net = ShuffleNetG2()
-    # net = SENet18()
-    # net = ShuffleNetV2(1)
-    # net = EfficientNetB0()
-    # net = RegNetX_200MF()
-    # net = SimpleDLA()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     net = net.to(device)
