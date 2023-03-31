@@ -7,3 +7,6 @@
 [submodule "anomaly_detection/pytorch-cutpaste"]
 	path = anomaly_detection/pytorch-cutpaste
 	url = https://github.com/Runinho/pytorch-cutpaste.git
+[submodule "anomaly_detection/RD4AD"]
+	path = anomaly_detection/RD4AD
+	url = https://github.com/hq-deng/RD4AD.git
