@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 from collections import defaultdict
+import os
 
 from sklearn.metrics import roc_curve, auc
 from sklearn.manifold import TSNE
@@ -52,7 +53,7 @@ def get_train_embeds(model, data_path, transform, device, dataset = 'cifar10'):
     train_embed = torch.cat(train_embed)
     return train_embed
 
-def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', device="cpu", save_plots=False, size=256, show_training_data=True, model=None, train_embed=None, density=GaussianDensityTorch()):
+def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', device="cpu", save_plots=False, size=256, model=None, train_embed=None, density=GaussianDensityTorch()):
     # create test dataset
     test_transform = transforms.Compose([])
     test_transform.transforms.append(transforms.Resize((size,size)))
@@ -110,70 +111,20 @@ def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', device="c
 
     #create eval plot dir
     if save_plots:
-        eval_dir = Path("eval") / modelname
+        eval_dir = Path(__file__).parent / 'Cutpaste_eval_plots' 
         eval_dir.mkdir(parents=True, exist_ok=True)
-        
-        # plot tsne
-        # also show some of the training data
-        show_training_data = False
-        if show_training_data:
-            #augmentation setting
-            # TODO: do all of this in a separate function that we can call in training and evaluation.
-            #       very ugly to just copy the code lol
-            min_scale = 0.5
-
-            # create Training Dataset and Dataloader
-            after_cutpaste_transform = transforms.Compose([])
-            after_cutpaste_transform.transforms.append(transforms.ToTensor())
-            after_cutpaste_transform.transforms.append(transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                                                            std=[0.229, 0.224, 0.225]))
-
-            train_transform = transforms.Compose([])
-            #train_transform.transforms.append(transforms.RandomResizedCrop(size, scale=(min_scale,1)))
-            #train_transform.transforms.append(transforms.GaussianBlur(int(size/10), sigma=(0.1,2.0)))
-            train_transform.transforms.append(CutPaste(transform=after_cutpaste_transform))
-            # train_transform.transforms.append(transforms.ToTensor())
-
-            train_data = MVTecAT("Data", defect_type, transform=train_transform, size=size)
-            dataloader_train = DataLoader(train_data, batch_size=32,
-                        shuffle=True, num_workers=8, collate_fn=cut_paste_collate_fn,
-                        persistent_workers=True)
-            # inference training data
-            train_labels = []
-            train_embeds = []
-            with torch.no_grad():
-                for x1, x2 in dataloader_train:
-                    x = torch.cat([x1,x2], axis=0)
-                    embed, logit = model(x.to(device))
-
-                    # generate labels:
-                    y = torch.tensor([0, 1])
-                    y = y.repeat_interleave(x1.size(0))
-
-                    # save 
-                    train_embeds.append(embed.cpu())
-                    train_labels.append(y)
-                    # only less data
-                    break
-            train_labels = torch.cat(train_labels)
-            train_embeds = torch.cat(train_embeds)
-
-            # for tsne we encode training data as 2, and augmentet data as 3
-            tsne_labels = torch.cat([labels, train_labels + 2])
-            tsne_embeds = torch.cat([embeds, train_embeds])
-        else:
-            tsne_labels = labels
-            tsne_embeds = embeds
-        plot_tsne(tsne_labels, tsne_embeds, eval_dir / "tsne.png")
+        tsne_labels = labels
+        tsne_embeds = embeds
+        plot_tsne(tsne_labels, tsne_embeds, eval_dir / f"tsne_{dataset}_{dist}.png")
     else:
-        eval_dir = Path("unused")
+        eval_dir = Path(__file__).parent
     
     print(f"using density estimation {density.__class__.__name__}")
     density.fit(train_embed)
     distances = density.predict(embeds)
     #TODO: set threshold on mahalanobis distances and use "real" probabilities
-
-    roc_auc = plot_roc(labels, distances, eval_dir / "roc_plot.png", modelname=modelname, save_plots=save_plots)
+    
+    roc_auc = plot_roc(labels, distances, eval_dir / f"roc_plot_{dataset}_{dist}.png", modelname=modelname, save_plots=save_plots)
     
 
     return roc_auc
@@ -195,7 +146,7 @@ def plot_roc(labels, scores, filename, modelname="", save_plots=False):
         plt.ylim([0.0, 1.05])
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
-        plt.title(f'Receiver operating characteristic {modelname}')
+        plt.title(f'Receiver operating characteristic {os.path.basename(modelname)}')
         plt.legend(loc="lower right")
         # plt.show()
         plt.savefig(filename)
@@ -223,11 +174,14 @@ if __name__ == '__main__':
     parser.add_argument('--density', default="torch", choices=["torch", "sklearn"],
                     help='density implementation to use. See `density.py` for both implementations. (default: torch)')
 
-    parser.add_argument('--save_plots', default=False, type=str2bool,
+    parser.add_argument('--save_plots', default=True, type=str2bool,
                     help='save TSNE and roc plots')
     
     parser.add_argument('--dataset', default = "cifar10", choices = ['cifar10', 'cifar100'])
     
+    parser.add_argument('--dist', default = "L2", choices = ['L2', 'Linf'])
+
+    parser.add_argument('--all_type', default = False, type=str2bool)
 
     args = parser.parse_args()
 
@@ -241,14 +195,25 @@ if __name__ == '__main__':
     }
     density = density_mapping[args.density]
 
-    # find models
-    model_name = Path(__file__).parent.parent / 'models' / f'cutpaste_{args.dataset}.pth'
+    if not args.all_type:
+        # find models
+        model_name = Path(__file__).parent / 'Cutpaste_models' / f'cutpaste_{args.dataset}.pth'
 
-    obj = defaultdict(list)
-    print(f"evaluating {args.dataset}")
-    roc_auc = eval_model(model_name, data_path, save_plots=args.save_plots, device=device, density=density())
-    print(f"AUC: {roc_auc}")
+        
+        print(f"evaluating {args.dataset}")
+        roc_auc = eval_model(model_name, data_path, dist = args.dist, dataset = args.dataset, save_plots=args.save_plots, device=device, density=density())
+        print(f"AUC: {roc_auc}")
     
+    else:
+        obj = defaultdict(list)
+        num_classes = 10 if args.dataset == "cifar10" else 100
+        for class_idx in range(num_classes):
+            model_name = Path(__file__).parent / 'Cutpaste_models' / f'cutpaste_{args.dataset}_{class_idx}.pth'
+            print(f"evaluating {args.dataset}_{class_idx}")
+            roc_auc = eval_model(model_name, data_path, dist = args.dist, dataset = args.dataset, save_plots=args.save_plots, device=device, density=density())
+            print(f"AUC: {roc_auc}")
+            obj["class_idx"].append(class_idx)
+            obj["AUC"].append(roc_auc)
     # # save pandas dataframe
     # eval_dir = Path("eval") / args.model_dir
     # eval_dir.mkdir(parents=True, exist_ok=True)
