@@ -3,7 +3,7 @@ from pathlib import Path
 from collections import defaultdict
 import os
 
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, accuracy_score
 from sklearn.manifold import TSNE
 from torchvision import transforms
 from torch.utils.data import DataLoader
@@ -38,9 +38,13 @@ def get_train_data(data_path, transform, dataset = 'cifar10'):
     
     return train_data
 
-def get_train_embeds(model, data_path, transform, device, dataset = 'cifar10'):
+def get_train_embeds(model, data_path, transform, device, dataset = 'cifar10', cls_idx = None):
     # train data / train kde
     data = get_train_data(data_path, transform, dataset = dataset)
+    if cls_idx is not None:
+        targets = data.targets
+        indices = (np.array(targets) == cls_idx).nonzero()[0]
+        data = torch.utils.data.Subset(data, indices)
 
     dataloader_train = DataLoader(data, batch_size=64,
                             shuffle=False, num_workers=4)
@@ -53,7 +57,7 @@ def get_train_embeds(model, data_path, transform, device, dataset = 'cifar10'):
     train_embed = torch.cat(train_embed)
     return train_embed
 
-def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', device="cpu", save_plots=False, size=256, model=None, train_embed=None, density=GaussianDensityTorch()):
+def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', cls_idx = None, device="cpu", save_plots=False, size=256, model=None, train_embed=None, density=GaussianDensityTorch()):
     # create test dataset
     test_transform = transforms.Compose([])
     test_transform.transforms.append(transforms.Resize((size,size)))
@@ -68,10 +72,21 @@ def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', device="c
                                                             std=[0.2675, 0.2565, 0.2761]))
         test_data = CIFAR100Data(
         root= data_path, train=False, download=True, transform = test_transform)
-    
+
+    if cls_idx is not None:
+        targets = test_data.targets
+        indices = (np.array(targets) == cls_idx).nonzero()[0]
+        test_data = torch.utils.data.Subset(test_data, indices)
+
     target_len = len(test_data)
     adv_path = Path(__file__).parent.parent/'auto_attack_gen_data'/f'aa_standard_{dist}_{dataset}_10000_eps_0.03137.pth'
-    adv_data = Dataset([1] * target_len, torch.load(adv_path)['adv_complete'], transforms.Resize((size,size)))
+    if cls_idx is not None:
+        adv_data = torch.load(adv_path)['adv_complete']
+        indices = (np.array(targets) == cls_idx).nonzero()[0]
+        adv_data = torch.utils.data.Subset(adv_data, indices)
+        adv_data = Dataset([1] * target_len, adv_data, transforms.Resize((size,size)))
+    else:
+        adv_data = Dataset([1] * target_len, torch.load(adv_path)['adv_complete'], transforms.Resize((size,size)))
     test_data = Dataset([0] * target_len, test_data)
     data = torch.utils.data.ConcatDataset([test_data, adv_data])
     dataloader_test = DataLoader(data, batch_size=64,
@@ -103,31 +118,44 @@ def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', device="c
     embeds = torch.cat(embeds)
 
     if train_embed is None:
-        train_embed = get_train_embeds(model, data_path, test_transform, device = device, dataset = dataset)
+        train_embed = get_train_embeds(model, data_path, test_transform, device = device, dataset = dataset, cls_idx = cls_idx)
 
     # norm embeds
     embeds = torch.nn.functional.normalize(embeds, p=2, dim=1)
     train_embed = torch.nn.functional.normalize(train_embed, p=2, dim=1)
 
     #create eval plot dir
+    eval_dir = Path(__file__).parent / 'Cutpaste_eval_plots' 
     if save_plots:
-        eval_dir = Path(__file__).parent / 'Cutpaste_eval_plots' 
         eval_dir.mkdir(parents=True, exist_ok=True)
         tsne_labels = labels
         tsne_embeds = embeds
-        plot_tsne(tsne_labels, tsne_embeds, eval_dir / f"tsne_{dataset}_{dist}.png")
-    else:
-        eval_dir = Path(__file__).parent
+        if cls_idx is not None:
+            plot_tsne(tsne_labels, tsne_embeds, eval_dir / f"tsne_{dataset}_{cls_idx}_{dist}.png")
+        else:
+            plot_tsne(tsne_labels, tsne_embeds, eval_dir / f"tsne_{dataset}_{dist}.png")
+        
     
     print(f"using density estimation {density.__class__.__name__}")
     density.fit(train_embed)
     distances = density.predict(embeds)
-    #TODO: set threshold on mahalanobis distances and use "real" probabilities
+    train_distances = density.predict(train_embed)
     
-    roc_auc = plot_roc(labels, distances, eval_dir / f"roc_plot_{dataset}_{dist}.png", modelname=modelname, save_plots=save_plots)
-    
+    mean_distance = torch.mean(train_distances)
+    stddev_distance = torch.std(train_distances)
 
-    return roc_auc
+    threshold = mean_distance + 2 * stddev_distance
+
+    pred_labels = np.where(distances > threshold, 1, 0)
+    total_acc = accuracy_score(labels, pred_labels)
+    detect_rate = np.sum(pred_labels[labels == 1]) / len(labels[labels == 1])
+    
+    if cls_idx is not None:
+        roc_auc = plot_roc(labels, distances, eval_dir / f"roc_plot_{dataset}_{cls_idx}_{dist}.png", modelname=modelname, save_plots=save_plots)
+    else:
+        roc_auc = plot_roc(labels, distances, eval_dir / f"roc_plot_{dataset}_{dist}.png", modelname=modelname, save_plots=save_plots)
+    
+    return roc_auc, detect_rate, total_acc
     
 
 def plot_roc(labels, scores, filename, modelname="", save_plots=False):
@@ -168,9 +196,6 @@ def plot_tsne(labels, embeds, filename):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='eval models')
 
-    parser.add_argument('--model_dir', default="models",
-                    help=' directory contating models to evaluate (default: models)')
-
     parser.add_argument('--density', default="torch", choices=["torch", "sklearn"],
                     help='density implementation to use. See `density.py` for both implementations. (default: torch)')
 
@@ -194,6 +219,7 @@ if __name__ == '__main__':
         "sklearn": GaussianDensitySklearn
     }
     density = density_mapping[args.density]
+    obj = defaultdict(list)
 
     if not args.all_type:
         # find models
@@ -201,21 +227,33 @@ if __name__ == '__main__':
 
         
         print(f"evaluating {args.dataset}")
-        roc_auc = eval_model(model_name, data_path, dist = args.dist, dataset = args.dataset, save_plots=args.save_plots, device=device, density=density())
+        roc_auc, detect_rate, total_acc = eval_model(model_name, data_path, dist = args.dist, dataset = args.dataset, save_plots=args.save_plots, device=device, density=density())
         print(f"AUC: {roc_auc}")
+        obj["AUC"].append(roc_auc)
+        obj["detection_rate"].append(detect_rate)
+        obj["total_acc"].append(total_acc)
+        # save pandas dataframe
+        eval_dir = Path(__file__).parent / 'Cutpaste_eval_plots'
+        eval_dir.mkdir(parents=True, exist_ok=True)
+        df = pd.DataFrame(obj)
+        df.to_csv(eval_dir / f"cutpaste_{args.dataset}_{args.dist}_AUC.csv", index=False)
+
     
     else:
-        obj = defaultdict(list)
+        
         num_classes = 10 if args.dataset == "cifar10" else 100
-        for class_idx in range(num_classes):
-            model_name = Path(__file__).parent / 'Cutpaste_models' / f'cutpaste_{args.dataset}_{class_idx}.pth'
-            print(f"evaluating {args.dataset}_{class_idx}")
-            roc_auc = eval_model(model_name, data_path, dist = args.dist, dataset = args.dataset, save_plots=args.save_plots, device=device, density=density())
+        for cls_idx in range(num_classes):
+            model_name = Path(__file__).parent / 'Cutpaste_models' / f'cutpaste_{args.dataset}_{cls_idx}.pth'
+            print(f"evaluating {args.dataset}_{cls_idx}")
+            roc_auc, detect_rate, total_acc = eval_model(model_name, data_path, dist = args.dist, dataset = args.dataset, save_plots=args.save_plots, 
+                                                         cls_idx = cls_idx, device=device, density=density())
             print(f"AUC: {roc_auc}")
-            obj["class_idx"].append(class_idx)
+            obj["class_idx"].append(cls_idx)
             obj["AUC"].append(roc_auc)
-    # # save pandas dataframe
-    # eval_dir = Path("eval") / args.model_dir
-    # eval_dir.mkdir(parents=True, exist_ok=True)
-    # df = pd.DataFrame(obj)
-    # df.to_csv(str(eval_dir) + "_perf.csv")
+            obj["detection_rate"].append(detect_rate)
+            obj["total_acc"].append(total_acc)
+        # save pandas dataframe
+        eval_dir = Path(__file__).parent / 'Cutpaste_eval_plots'
+        eval_dir.mkdir(parents=True, exist_ok=True)
+        df = pd.DataFrame(obj)
+        df.to_csv(eval_dir / f"cutpaste_{args.dataset}_{args.dist}_all_type_AUC.csv", index=False)

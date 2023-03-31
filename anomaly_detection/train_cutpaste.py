@@ -61,8 +61,8 @@ def trainCutPaste(epoch, lr, optim_name, size, all_type, batch_size, freeze_resn
             scheduler = None
 
         # train model
+        model.train()
         for e in range(epoch):
-            model.train()
             total_loss = 0
             total_num = 0
             if e == freeze_resnet:
@@ -86,6 +86,8 @@ def trainCutPaste(epoch, lr, optim_name, size, all_type, batch_size, freeze_resn
             torch.save(model.state_dict(), Path(__file__).parent / 'Cutpaste_models'/f'cutpaste_{dataset}.pth')
         else:
             torch.save(model.state_dict(), Path(__file__).parent / 'Cutpaste_models'/f'cutpaste_{dataset}_{cls_idx}.pth')
+
+            
     weight_decay = 0.00003
     momentum = 0.9
     after_cutpaste_transform = transforms.Compose([])
