@@ -20,11 +20,11 @@ from pretrain.utils import progress_bar
 
 
 if __name__ == '__main__':
-	model_path = Path(__file__).parent.parent/'models'
-	adversial_data_path = Path(__file__).parent.parent/'auto_attack_gen_data'
+	model_path = Path(__file__).parent.parent/'ece740/models'
+	adversial_data_path = Path(__file__).parent.parent/'./ece740/auto_attack_gen_data'
 	data_path = Path(__file__).parent.parent/'datasets'
 	parser = argparse.ArgumentParser(description='adversarial sample testing')
-	parser.add_argument('--dataset', '-d', default='cifar10')
+	parser.add_argument('--dataset', '-d', default='cifar100')
 	parser.add_argument('--norm', type=str, default='Linf')
 	parser.add_argument('--epsilon', type=float, default=8./255.)
 	parser.add_argument('--version', type=str, default='standard')
@@ -61,6 +61,7 @@ if __name__ == '__main__':
 	else:
 	    raise ValueError("Dataset name has to be 'cifar10' or 'cifar100' ")
 
+
 	ckpt = torch.load(args.model)
 	net.load_state_dict(ckpt['net']) #ckpt is a dict with ket 'net' storing the model weight parameters based on "pretrain.py"
 	net = net.to(device)
@@ -68,6 +69,7 @@ if __name__ == '__main__':
 
 
 	# load adversarial data
+	print(args.adversial_data)
 	item = torch.load(args.adversial_data)['adv_complete']
 	test_loader = data.DataLoader(item, batch_size=args.batch_size, shuffle=False, num_workers=4)
 	
@@ -78,12 +80,12 @@ if __name__ == '__main__':
 
 	# load true label from the same test dataset that was used to do auto-attack
 	if dataset == 'cifar10':
-	    transform_chain = transforms.Compose([
+		transform_chain = transforms.Compose([
 	        transforms.ToTensor(),
 	        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-	    ])
+		])
 		item = torchvision.datasets.CIFAR10(root=args.data_dir, train=False, transform=transform_chain, download=True)
-	    test_loader = data.DataLoader(item, batch_size=args.batch_size, shuffle=False, num_workers=4)
+		test_loader = data.DataLoader(item, batch_size=args.batch_size, shuffle=False, num_workers=4)
 	elif dataset == 'cifar100':
 	    transform_chain = transforms.Compose([
 	        transforms.ToTensor(),

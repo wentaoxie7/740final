@@ -13,7 +13,7 @@ import argparse
 from pathlib import Path
 
 from models import *
-from pretrain.utils import progress_bar, reproduce
+from pretrain.utils import progress_bar
 from models.resnet import ResNet18, BasicBlock, ResNet
 
 
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
 
-    reproduce()
+    
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     best_acc = 0  # best test accuracy
