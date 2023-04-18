@@ -1,0 +1,4 @@
+{'size': 64, 'dataset': 'cifar10', 'dist': 'Linf', 'model': 'resnet34', 'device': 'cuda:1'}
+AUROC: 0.9944803600000001
+Detection Rate: 0.0957
+Total Accuracy: 0.54785
