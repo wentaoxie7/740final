@@ -3,3 +3,4 @@
 /cifar10checkpoint
 /cifar100checkpoint
 __pycache__/
+/anomaly_detection/RD4AD_models/*
