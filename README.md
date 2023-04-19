@@ -117,4 +117,98 @@ Results are summarized as below:
 > - Therefore, to use it together with its true label, follow steps in script auto_attacked_data_eval.py to concat it with its true labels to create a dataloader object.
 
 
+# Anomaly Detection #
+For Cutpaste and Reverse Distillation, the original repositories are saved at **/anomaly_detection/Cutpaste** and **/anomaly_detection/RD4AD** without any modifications. Our created scripts for training & inference are inside **/anomaly_detection**
+# Cutpaste #
+The plots and results are shown in **/anomaly_detection/Cutpaste_eval_plots/**
+
+The optimal models' state dictionaries are saved in **/anomaly_detection/Cutpaste_models/** . 
+
+Those cutpaste_cifar10_*.pth stand for training with all types(one model for one category class, only tried for cifar10)
+
+## Training ##
+```
+python -m anomaly_detection.train_cutpaste [Options]
+```
+
+Options:
+
+--epoch: number of epochs for training (default 50)
+
+--lr: learning rate (default: 0.03)
+
+--size: resize of input (default: 256)
+
+--dataset: {cifar10, cifar100} (default: cifar10)
+
+--optim: optimizer {sgd, adam} (default: sgd)
+
+--freeze_resnet: number of epochs for freezing resnet (default: 30)
+
+--all_type: flag for whether training one model for each category class(10 models for cifar10) rather than one model handling all (default: False)
+
+
+## Inference ##
+```
+python -m anomaly_detection.eval_cutpaste [Options]
+```
+Options:
+
+--density: using pytorch or sklearn implementation for computing Gaussian Density Score {torch, sklearn} (default: torch)
+
+--save_plots: whether to save the T-SNE and AUROC plots (default: True)
+
+--dataset: {ciafr10, cifar100} (default: cifar10)
+
+--dist: test on L2 or Linf norm data (default: L2)
+
+--all_type: whether one model is for one category class(default: False) 
+
+
+# Reverse Distillation #
+The plots and results are shown in **/anomaly_detection/RD4AD_eval_plots/**
+
+The optimal models' state dictionaries are saved in **/anomaly_detection/RD4AD_models/** . 
+
+## Training ##
+
+```
+python -m anomaly_detection.train_rd4ad [Options]
+
+```
+
+Options:
+
+--model: model backbone{resnet18, resnet34, resnet50, resnet152, wide_resnet50_2} (default: resnet34)
+
+--epoch: num of epochs for training (default: 20)
+
+--lr: learning rate (default: 0.05)
+
+--batch_size: batch size (default: 64)
+
+--size: resize of input (default: 64)
+
+--dataset: {ciafr10, cifar100} (default: cifar10)
+
+--device: {cpu, cuda} (default: cpu)
+
+
+## Inference ##
+```
+python -m anomaly_detection.eval_rd4ad [Options]
+```
+
+Options:
+
+--size: resize of input (default: 64)
+
+--dataset: {ciafr10, cifar100} (default: cifar10)
+
+--dist: test on L2 or Linf norm data (default: L2)
+
+--model: model backbone{resnet18, resnet34, resnet50, resnet152, wide_resnet50_2} (default: resnet34)
+
+--device: {cpu, cuda} (default: cpu)
+
 
