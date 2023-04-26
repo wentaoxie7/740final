@@ -149,13 +149,21 @@ def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', cls_idx =
     pred_labels = np.where(distances > threshold, 1, 0)
     total_acc = accuracy_score(labels, pred_labels)
     detect_rate = np.sum(pred_labels[labels == 1]) / len(labels[labels == 1])
+
+    train_score = np.mean(train_distances)
+    clean_test_score = np.mean(distances[labels == 0])
+    adv_test_score = np.mean(distances[labels == 1])
+    print(f"train score: {train_score}")
+    print(f"clean test score: {clean_test_score}")
+    print(f"adv test score: {adv_test_score}")
+    
     
     if cls_idx is not None:
         roc_auc = plot_roc(labels, distances, eval_dir / f"roc_plot_{dataset}_{cls_idx}_{dist}.png", modelname=modelname, save_plots=save_plots)
     else:
         roc_auc = plot_roc(labels, distances, eval_dir / f"roc_plot_{dataset}_{dist}.png", modelname=modelname, save_plots=save_plots)
     
-    return roc_auc, detect_rate, total_acc
+    return roc_auc, detect_rate, total_acc, train_score, clean_test_score, adv_test_score
     
 
 def plot_roc(labels, scores, filename, modelname="", save_plots=False):
@@ -227,11 +235,14 @@ if __name__ == '__main__':
 
         
         print(f"evaluating {args.dataset}")
-        roc_auc, detect_rate, total_acc = eval_model(model_name, data_path, dist = args.dist, dataset = args.dataset, save_plots=args.save_plots, device=device, density=density())
+        roc_auc, detect_rate, total_acc, train_score, clean_test_score, adv_test_score = eval_model(model_name, data_path, dist = args.dist, dataset = args.dataset, save_plots=args.save_plots, device=device, density=density())
         print(f"AUC: {roc_auc}")
         obj["AUC"].append(roc_auc)
         obj["detection_rate"].append(detect_rate)
         obj["total_acc"].append(total_acc)
+        obj["train_score"].append(train_score)
+        obj["clean_test_score"].append(clean_test_score)
+        obj["adv_test_score"].append(adv_test_score)
         # save pandas dataframe
         eval_dir = Path(__file__).parent / 'Cutpaste_eval_plots'
         eval_dir.mkdir(parents=True, exist_ok=True)
@@ -245,13 +256,16 @@ if __name__ == '__main__':
         for cls_idx in range(num_classes):
             model_name = Path(__file__).parent / 'Cutpaste_models' / f'cutpaste_{args.dataset}_{cls_idx}.pth'
             print(f"evaluating {args.dataset}_{cls_idx}")
-            roc_auc, detect_rate, total_acc = eval_model(model_name, data_path, dist = args.dist, dataset = args.dataset, save_plots=args.save_plots, 
+            roc_auc, detect_rate, total_acc, train_score, clean_test_score, adv_test_score = eval_model(model_name, data_path, dist = args.dist, dataset = args.dataset, save_plots=args.save_plots, 
                                                          cls_idx = cls_idx, device=device, density=density())
             print(f"AUC: {roc_auc}")
             obj["class_idx"].append(cls_idx)
             obj["AUC"].append(roc_auc)
             obj["detection_rate"].append(detect_rate)
             obj["total_acc"].append(total_acc)
+            obj["train_score"].append(train_score)
+            obj["clean_test_score"].append(clean_test_score)
+            obj["adv_test_score"].append(adv_test_score)
         # save pandas dataframe
         eval_dir = Path(__file__).parent / 'Cutpaste_eval_plots'
         eval_dir.mkdir(parents=True, exist_ok=True)

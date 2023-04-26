@@ -1,4 +1,7 @@
-{'size': 96, 'dataset': 'cifar100', 'dist': 'L2', 'model': 'resnet152', 'device': 'cuda:1'}
+{'size': 96, 'dataset': 'cifar100', 'dist': 'L2', 'model': 'resnet152', 'device': 'cuda'}
 AUROC: 0.97411108
 Detection Rate: 1.0
 Total Accuracy: 0.5
+train score: 139.20317472165166
+clean test score: 1017.0000782781829
+adv test score: 1230.5704985874736

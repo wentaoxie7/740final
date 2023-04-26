@@ -4,3 +4,4 @@
 /cifar100checkpoint
 __pycache__/
 /anomaly_detection/RD4AD_models/*
+/anomaly_detection/CPRD_models/*

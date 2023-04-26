@@ -1,0 +1,7 @@
+{'size': 64, 'dataset': 'cifar100', 'dist': 'Linf', 'model': 'resnet18', 'device': 'cuda'}
+AUROC: 0.9957859299999999
+Detection Rate: 0.9808
+Total Accuracy: 0.9643
+train score: 1836.4003450083733
+clean test score: 1455.595232762406
+adv test score: 4519.942656123637
