@@ -168,7 +168,7 @@ Options:
 # Reverse Distillation #
 The plots and results are shown in **/anomaly_detection/RD4AD_eval_plots/**
 
-The optimal models' state dictionaries are saved in **/anomaly_detection/RD4AD_models/** .  Please download from this [link](https://drive.google.com/drive/folders/1dFs2KZ0FRgClwMX3i1930FAtQt4hB3OP?usp=share_link) due to the size limit on GitHub.
+The optimal models' state dictionaries are saved in **/anomaly_detection/RD4AD_models/** .  Please download from this [link](https://drive.google.com/drive/folders/1-aP1J_L5DX44ZPZ3isPLdAJdH6i2Ur0d?usp=share_link) due to the size limit on GitHub.
 
 ## Training ##
 
@@ -214,7 +214,7 @@ Options:
 # CutPaste Reverse Distillation (CPRD) #
 The plots and results are shown in **/anomaly_detection/CPRD_eval_plots/**
 
-The optimal models' state dictionaries are saved in **/anomaly_detection/CPRD_models/** . Please download from this [link](https://drive.google.com/drive/folders/1-aP1J_L5DX44ZPZ3isPLdAJdH6i2Ur0d?usp=share_link) due to the size limit on GitHub.
+The optimal models' state dictionaries are saved in **/anomaly_detection/CPRD_models/** . Please download from this [link](https://drive.google.com/drive/folders/1dFs2KZ0FRgClwMX3i1930FAtQt4hB3OP?usp=share_link) due to the size limit on GitHub.
 
 
 ## Training ##
