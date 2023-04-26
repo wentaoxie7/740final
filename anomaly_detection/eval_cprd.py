@@ -17,12 +17,12 @@ from sklearn.utils import shuffle
 import torch.nn.functional as F
 from scipy.ndimage import gaussian_filter
 
-
+from .CPRD.resnet  import wide_resnet50_2, resnet34, resnet18, resnet152, resnet50, ClassifierHead
+from .CPRD.de_resnet import de_wide_resnet50_2, de_resnet34, de_resnet18, de_resnet50
+from .CPRD.de_resnet import resnet152 as de_resnet152
+from .utils import *
 from .cifar import CIFAR10Data, CIFAR100Data, Dataset
-from .RD4AD.resnet import wide_resnet50_2, resnet34, resnet18,  resnet152, resnet50
-from .RD4AD.de_resnet import de_wide_resnet50_2, de_resnet34, de_resnet18, de_resnet50
-from .RD4AD.de_resnet import resnet152 as de_resnet152
-from .Cutpaste.density import GaussianDensitySklearn
+
 
 def cal_anomaly_map(fs_list, ft_list, out_size=32):
     anomaly_map = np.zeros([fs_list[0].shape[0], out_size, out_size])
@@ -65,6 +65,7 @@ def plot_roc(labels, scores, filename, model_name = '', save_plots=False):
 
     return roc_auc
 
+
 def train_anomaly_map(encoder, bn, decoder, data_path, size = 32,dataset = 'cifar10', device = 'cpu'):
     bn.eval()
     encoder.eval()
@@ -95,7 +96,7 @@ def train_anomaly_map(encoder, bn, decoder, data_path, size = 32,dataset = 'cifa
         for img in dataloader:
             img = img.to(device)
             inputs = encoder(img)
-            outputs = decoder(bn(inputs))
+            outputs = decoder(bn(inputs)[0])
 
             anomaly_map, _ = cal_anomaly_map(inputs, outputs, size)
             anomaly_map = gaussian_filter(anomaly_map, sigma=4)
@@ -103,8 +104,9 @@ def train_anomaly_map(encoder, bn, decoder, data_path, size = 32,dataset = 'cifa
             
     return np.concatenate(anomaly_list)
 
+
 def evaluation(model_name, encoder, bn, decoder, data_path, dist = 'L2', size = 32, dataset = 'cifar10', device = 'cpu'):
-    plot_dir = Path(__file__).parent / 'RD4AD_eval_plots'
+    plot_dir = Path(__file__).parent / 'CPRD_eval_plots'
     bn.eval()
     encoder.eval()
     decoder.eval()
@@ -158,7 +160,7 @@ def evaluation(model_name, encoder, bn, decoder, data_path, dist = 'L2', size = 
         for img, label in dataloader:
             img = img.to(device)
             inputs = encoder(img)
-            outputs = decoder(bn(inputs))
+            outputs = decoder(bn(inputs)[0])
             
             anomaly_map, _ = cal_anomaly_map(inputs, outputs, size)
 
@@ -173,7 +175,7 @@ def evaluation(model_name, encoder, bn, decoder, data_path, dist = 'L2', size = 
     
     mean = np.mean(train_maps)
     std = np.std(train_maps)
-    threshold = np.mean(train_maps) + 2 * std
+    threshold = mean + 2 * std
     train_score = np.mean(train_maps)
     clean_test_score = np.mean(pr_list[gt_list == 0])
     adv_test_score = np.mean(pr_list[gt_list == 1])
@@ -189,13 +191,14 @@ def evaluation(model_name, encoder, bn, decoder, data_path, dist = 'L2', size = 
 
     return auroc, detect_rate, total_acc, train_score, clean_test_score, adv_test_score
 
-    
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--size', type=int, default=64, help='image size')
     parser.add_argument('--dataset', default = "cifar10", choices = ['cifar10', 'cifar100'])
     parser.add_argument('--dist', default = "L2", choices = ['L2', 'Linf'])
-    parser.add_argument('--model', type=str, default = 'resnet34', choices=['resnet152', 'wide_resnet50_2', 'resnet34', 'resnet18', 'resnet50'])
+    parser.add_argument('--model', type=str, default = 'resnet18', choices=['resnet152', 'wide_resnet50_2', 'resnet34', 'resnet18', 'resnet50'])
     parser.add_argument('--device', type=str, default='cuda')
     args = parser.parse_args()
 
@@ -206,7 +209,7 @@ if __name__ == '__main__':
                   'resnet50': [resnet50, de_resnet50]}
 
     models = model_dict[args.model]
-    model_path = Path(__file__).parent / 'RD4AD_models'/ f'{args.dataset}_rd4ad_{args.model}.pth'
+    model_path = Path(__file__).parent / 'CPRD_models'/ f'{args.dataset}_cprd_{args.model}.pth'
     data_path = Path(__file__).parent.parent / 'datasets'
 
     device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
@@ -239,7 +242,7 @@ if __name__ == '__main__':
     print(f'train score: {train_score}')
     print(f'clean test score: {clean_test_score}')
     print(f'adv test score: {adv_test_score}')
-    result_name = Path(__file__).parent / 'RD4AD_eval_plots' / f'{args.dataset}_{args.model}_{args.dist}_result.txt'
+    result_name = Path(__file__).parent / 'CPRD_eval_plots' / f'{args.dataset}_{args.model}_{args.dist}_result.txt'
     with open(result_name, 'w') as f:
         f.write(f'{args.__dict__}\n')
         f.write(f'AUROC: {auroc}\n')
@@ -248,4 +251,3 @@ if __name__ == '__main__':
         f.write(f'train score: {train_score}\n')
         f.write(f'clean test score: {clean_test_score}\n')
         f.write(f'adv test score: {adv_test_score}\n')
-        

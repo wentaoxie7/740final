@@ -191,7 +191,7 @@ Options:
 
 --dataset: {ciafr10, cifar100} (default: cifar10)
 
---device: {cpu, cuda} (default: cpu)
+--device: {cpu, cuda} (default: cuda)
 
 
 ## Inference ##
@@ -209,6 +209,51 @@ Options:
 
 --model: model backbone{resnet18, resnet34, resnet50, resnet152, wide_resnet50_2} (default: resnet34)
 
---device: {cpu, cuda} (default: cpu)
+--device: {cpu, cuda} (default: cuda)
+
+# CutPaste Reverse Distillation (CPRD) #
+The plots and results are shown in **/anomaly_detection/CPRD_eval_plots/**
+
+The optimal models' state dictionaries are saved in **/anomaly_detection/CPRD_models/** . 
 
 
+## Training ##
+
+```
+python -m anomaly_detection.train_cprd [Options]
+
+```
+
+Options:
+
+--model: model backbone{resnet18, resnet34, resnet50, resnet152, wide_resnet50_2} (default: resnet18)
+
+--epoch: num of epochs for training (default: 20)
+
+--lr: learning rate (default: 0.05)
+
+--batch_size: batch size (default: 64)
+
+--size: resize of input (default: 64)
+
+--dataset: {ciafr10, cifar100} (default: cifar10)
+
+--device: {cpu, cuda} (default: cuda)
+
+
+## Inference ##
+```
+python -m anomaly_detection.eval_cprd [Options]
+```
+
+Options:
+
+--size: resize of input (default: 64)
+
+--dataset: {ciafr10, cifar100} (default: cifar10)
+
+--dist: test on L2 or Linf norm data (default: L2)
+
+--model: model backbone{resnet18, resnet34, resnet50, resnet152, wide_resnet50_2} (default: resnet18)
+
+--device: {cpu, cuda} (default: cuda)
