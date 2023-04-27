@@ -140,9 +140,12 @@ def eval_model(modelname, data_path, dist = 'L2', dataset = 'cifar10', cls_idx =
     density.fit(train_embed)
     distances = density.predict(embeds)
     train_distances = density.predict(train_embed)
+    if isinstance(density, GaussianDensityTorch):
+        distances = distances.cpu().numpy()
+        train_distances = train_distances.cpu().numpy()
     
-    mean_distance = torch.mean(train_distances)
-    stddev_distance = torch.std(train_distances)
+    mean_distance = np.mean(train_distances)
+    stddev_distance = np.std(train_distances)
 
     threshold = mean_distance + 2 * stddev_distance
 
