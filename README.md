@@ -1,3 +1,5 @@
+All codes are available https://drive.google.com/drive/folders/1zYI05BuOHdOfz434AT4q_2mAPfyOeAKJ?usp=sharing
+
 First, create your virtual environment with 
 ```
 virtualenv venv
@@ -33,14 +35,14 @@ Test Accuracy is summarized as below:
 | Cifar-100 | 200 | 77.370% |
 
 
-All models with trained parameters will be saved in cifar10checkpoint folder for cifar-10 dataset
-and in cifar100checkpoint folder for cifar-100 dataset
-> These two folders are too large to upload to github, therefore not showing here.
+All models with trained parameters will be saved in **cifar10checkpoint** folder for cifar-10 dataset
+and in **cifar100checkpoint** folder for cifar-100 dataset
+> These two folders are too large to upload, therefore not showing here.
 > However, if the above scripts are executed, the two folders will automatically be created.
-> The step below (step2) can only be conducted if the above scripts are executed. Otherwise, please skip to the step 3 where the final pretrained models is manually saved there and can be used later on.
+> The step below (step2) can only be conducted if the above scripts in step 1 are executed. Otherwise, please skip to the step 3 where the final pretrained models is manually saved there for further use.
 
 **step 2**
-Copy the last training epoch's model from each above folder to models folder (**NOTE: The following commands only works in Windows Command Prompt, for Linux System Terminal, it may be different command**)
+Copy the last training epoch's model from each above folder to **models** folder (**NOTE: The following commands only works in Windows Command Prompt, for Linux System Terminal, it may be different command**)
 - For cifar-10 dataset, in Windows Command Prompt, navigating to the main directory of the repo, use the following command if the last epoch's model is named as "epoch149.pt":
 ```
 copy cifar10checkpoint\epoch149.pt models\cifar10_model.pt
@@ -79,7 +81,7 @@ python auto_attack.py --dataset cifar100 --norm L2
 ```
 
 
-The generated auto-attacked adversarial data is saved in auto_attack_gen_data folder:
+The generated auto-attacked adversarial data is saved in **auto_attack_gen_data** folder:
 - aa_standard_L2_cifar10_10000_eps_0.03137.pth --> uses cifar10 testset and L2 norm, with epsilon = 0.03137
 - aa_standard_L2_cifar100_10000_eps_0.03137.pth --> uses cifar100 testset and L2 norm, with with epsilon = 0.03137
 - aa_standard_Linf_cifar10_10000_eps_0.03137.pth --> uses cifar10 testset and Linf norm, with epsilon = 0.03137
@@ -158,7 +160,7 @@ Options:
 
 --save_plots: whether to save the T-SNE and AUROC plots (default: True)
 
---dataset: {ciafr10, cifar100} (default: cifar10)
+--dataset: {cifar10, cifar100} (default: cifar10)
 
 --dist: test on L2 or Linf norm data (default: L2)
 
@@ -168,7 +170,7 @@ Options:
 # Reverse Distillation #
 The plots and results are shown in **/anomaly_detection/RD4AD_eval_plots/**
 
-The optimal models' state dictionaries are saved in **/anomaly_detection/RD4AD_models/** .  Please download from this [link](https://drive.google.com/drive/folders/1-aP1J_L5DX44ZPZ3isPLdAJdH6i2Ur0d?usp=share_link) due to the size limit on GitHub.
+The optimal models' state dictionaries are saved in **/anomaly_detection/RD4AD_models/** .  It is also available via this [link](https://drive.google.com/drive/folders/1-aP1J_L5DX44ZPZ3isPLdAJdH6i2Ur0d?usp=share_link)
 
 ## Training ##
 
@@ -189,7 +191,7 @@ Options:
 
 --size: resize of input (default: 64)
 
---dataset: {ciafr10, cifar100} (default: cifar10)
+--dataset: {cifar10, cifar100} (default: cifar10)
 
 --device: {cpu, cuda} (default: cuda)
 
@@ -203,7 +205,7 @@ Options:
 
 --size: resize of input (default: 64)
 
---dataset: {ciafr10, cifar100} (default: cifar10)
+--dataset: {cifar10, cifar100} (default: cifar10)
 
 --dist: test on L2 or Linf norm data (default: L2)
 
@@ -214,7 +216,7 @@ Options:
 # CutPaste Reverse Distillation (CPRD) #
 The plots and results are shown in **/anomaly_detection/CPRD_eval_plots/**
 
-The optimal models' state dictionaries are saved in **/anomaly_detection/CPRD_models/** . Please download from this [link](https://drive.google.com/drive/folders/1dFs2KZ0FRgClwMX3i1930FAtQt4hB3OP?usp=share_link) due to the size limit on GitHub.
+The optimal models' state dictionaries are saved in **/anomaly_detection/CPRD_models/** . It is also available via this [link](https://drive.google.com/drive/folders/1dFs2KZ0FRgClwMX3i1930FAtQt4hB3OP?usp=share_link)
 
 
 ## Training ##
@@ -236,7 +238,7 @@ Options:
 
 --size: resize of input (default: 64)
 
---dataset: {ciafr10, cifar100} (default: cifar10)
+--dataset: {cifar10, cifar100} (default: cifar10)
 
 --device: {cpu, cuda} (default: cuda)
 
@@ -250,10 +252,98 @@ Options:
 
 --size: resize of input (default: 64)
 
---dataset: {ciafr10, cifar100} (default: cifar10)
+--dataset: {cifar10, cifar100} (default: cifar10)
 
 --dist: test on L2 or Linf norm data (default: L2)
 
 --model: model backbone{resnet18, resnet34, resnet50, resnet152, wide_resnet50_2} (default: resnet18)
 
 --device: {cpu, cuda} (default: cuda)
+
+
+
+# PANDA
+Official PyTorch implementation of [**“PANDA: Adapting Pretrained Features for Anomaly Detection and Segmentation”**](https://arxiv.org/pdf/2010.05903.pdf) (CVPR 2021).
+
+## Virtual Environment
+Use the following commands:
+```
+cd PANDA-master
+virtualenv venv1 --python python3
+source venv1/bin/activate
+pip install -r requirements.txt --find-links https://download.pytorch.org/whl/torch_stable.html
+```
+
+## Data Preparation
+Use the following commands:
+```
+cd PANDA-master
+mkdir data
+```
+
+Download:
+* [80M Tiny Images - OE](https://drive.google.com/file/d/16c8-ofOnN5l7hmWp--WBCx3LIKXwHHuf/view?usp=sharing)
+* [Fisher Information Matrix Diagonal](https://drive.google.com/file/d/12PTw4yNqp6bgCHj94vcowwb37m81rvpY/view?usp=sharing)
+
+Extract these files into `PANDA-master/data` and unzip tiny.zip
+## File description:
+Panda.py : training PANDA
+train_oe.py : training CPP
+test_panda.py : testing PANDA and CPP
+find_threshold.py : using anomaly scores to try to find threshold
+generate_distribution.py : using anomaly scores to generate the distribution of anomaly and normal images
+plot_training_auroc.pyL : using training log to plot the auroc during training
+/result/[name]/data : contains the anomaly scores of test samples in every epoch
+/result/[name]/model : contains the model in every epoch
+/result/[name]/distances.txt : training log, each row is an epoch, each column represents:
+auroc, mean of normal anomaly scores, std of normal anomaly scores, decision boundary, detect rate, accuracy, mean of anomaly score on normal images, mean of anomaly score on adversarial images
+## Experiments reproduce
+PANDA：
+```
+train:
+python panda.py --dataset=cifar100  --ewc --epochs=50 --save_name=cifar100 --batch_size=32 --adversarial_address=../auto_attack_gen_data/aa_standard_Linf_cifar100_10000_eps_0.03137.pth
+python panda.py --dataset=cifar10  --ewc --epochs=50 --save_name=cifar10 --batch_size=32 --adversarial_address=../auto_attack_gen_data/aa_standard_Linf_cifar10_10000_eps_0.03137.pth
+
+
+test:
+python test_panda.py --dataset=cifar100  --ewc --epochs=49 --save_name=cifar100_L2 --batch_size=16 --adversarial_address=../auto_attack_gen_data/aa_standard_L2_cifar100_10000_eps_0.03137.pth
+python test_panda.py --dataset=cifar10  --ewc --epochs=49 --save_name=cifar10_L2 --batch_size=16 --adversarial_address=../auto_attack_gen_data/aa_standard_L2_cifar10_10000_eps_0.03137.pth
+```
+CPP: 
+```
+train:
+python train_oe.py --dataset=cifar100  --ewc --epochs=50 --save_name=cifar100 --batch_size=32 --adversarial_address=../auto_attack_gen_data/aa_standard_Linf_cifar100_10000_eps_0.03137.pth
+python train_oe.py --dataset=cifar10  --ewc --epochs=50 --save_name=cifar10 --batch_size=32 --adversarial_address=../auto_attack_gen_data/aa_standard_Linf_cifar10_10000_eps_0.03137.pth
+
+test:
+python test_oe.py --dataset=cifar100  --ewc --epochs=49 --save_name=cifar100_oe_L2 --batch_size=16 --adversarial_address=../auto_attack_gen_data/aa_standard_L2_cifar100_10000_eps_0.03137.pth
+python test_oe.py --dataset=cifar10  --ewc --epochs=49 --save_name=cifar10_oe_L2 --batch_size=16 --adversarial_address=../auto_attack_gen_data/aa_standard_L2_cifar10_10000_eps_0.03137.pth
+
+* test CPP is currently unavailable since I forgot to save the model, I will fix that problems, but it take time
+```
+
+## Experiment Result:
+see in './result/cifar10/distance.txt','./result/cifar100/distance.txt','./result/cifar10_oe/distance.txt','./result/cifar100/distance.txt'
+
+
+## Further work
+See our new paper [**“Mean-Shifted Contrastive Loss for Anomaly Detection”**](https://arxiv.org/pdf/2106.03844.pdf) which achieves state-of-the-art anomaly detection performance on multiple benchmarks including 97.5% ROC-AUC on the CIFAR-10 dataset.
+
+[**GitHub Repository**](https://github.com/talreiss/Mean-Shifted-Anomaly-Detection)
+
+## Video Anomaly Detection
+See our new paper [**“Attribute-based Representations for Accurate and Interpretable Video Anomaly Detection”**](https://arxiv.org/pdf/2212.00789.pdf) which achieves state-of-the-art video anomaly detection performance on multiple benchmarks including 85.9% ROC-AUC on the ShanghaiTech dataset.
+
+[**GitHub Repository**](https://github.com/talreiss/Accurate-Interpretable-VAD)
+
+## Citation
+If you find this useful, please cite our paper:
+```
+@inproceedings{reiss2021panda,
+  title={PANDA: Adapting Pretrained Features for Anomaly Detection and Segmentation},
+  author={Reiss, Tal and Cohen, Niv and Bergman, Liron and Hoshen, Yedid},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={2806--2814},
+  year={2021}
+}
+```
