@@ -280,19 +280,25 @@ mkdir data
 ```
 
 Download:
-* [80M Tiny Images - OE](https://drive.google.com/file/d/16c8-ofOnN5l7hmWp--WBCx3LIKXwHHuf/view?usp=sharing)
-* [Fisher Information Matrix Diagonal](https://drive.google.com/file/d/12PTw4yNqp6bgCHj94vcowwb37m81rvpY/view?usp=sharing)
+* [data](https://drive.google.com/drive/folders/1R3bJbU54o0hkusXUfdwIuNKWbyMaQquZ?usp=share_link) and [result](https://drive.google.com/drive/folders/1FTS1mfSGx9hLkfSLOQS0pqEqlcRYSw-Q?usp=share_link) folder and paste them under 'PANDA-master'
 
-Extract these files into `PANDA-master/data` and unzip tiny.zip
 ## File description:
 Panda.py : training PANDA
+
 train_oe.py : training CPP
+
 test_panda.py : testing PANDA and CPP
+
 find_threshold.py : using anomaly scores to try to find threshold
+
 generate_distribution.py : using anomaly scores to generate the distribution of anomaly and normal images
+
 plot_training_auroc.pyL : using training log to plot the auroc during training
+
 /result/[name]/data : contains the anomaly scores of test samples in every epoch
+
 /result/[name]/model : contains the model in every epoch
+
 /result/[name]/distances.txt : training log, each row is an epoch, each column represents:
 auroc, mean of normal anomaly scores, std of normal anomaly scores, decision boundary, detect rate, accuracy, mean of anomaly score on normal images, mean of anomaly score on adversarial images
 ## Experiments reproduce
