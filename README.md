@@ -263,8 +263,6 @@ Options:
 
 
 # PANDA
-Official PyTorch implementation of [**“PANDA: Adapting Pretrained Features for Anomaly Detection and Segmentation”**](https://arxiv.org/pdf/2010.05903.pdf) (CVPR 2021).
-
 ## Virtual Environment
 Use the following commands:
 ```
@@ -326,24 +324,5 @@ python test_oe.py --dataset=cifar10  --ewc --epochs=49 --save_name=cifar10_oe_L2
 see in './result/cifar10/distance.txt','./result/cifar100/distance.txt','./result/cifar10_oe/distance.txt','./result/cifar100/distance.txt'
 
 
-## Further work
-See our new paper [**“Mean-Shifted Contrastive Loss for Anomaly Detection”**](https://arxiv.org/pdf/2106.03844.pdf) which achieves state-of-the-art anomaly detection performance on multiple benchmarks including 97.5% ROC-AUC on the CIFAR-10 dataset.
 
-[**GitHub Repository**](https://github.com/talreiss/Mean-Shifted-Anomaly-Detection)
 
-## Video Anomaly Detection
-See our new paper [**“Attribute-based Representations for Accurate and Interpretable Video Anomaly Detection”**](https://arxiv.org/pdf/2212.00789.pdf) which achieves state-of-the-art video anomaly detection performance on multiple benchmarks including 85.9% ROC-AUC on the ShanghaiTech dataset.
-
-[**GitHub Repository**](https://github.com/talreiss/Accurate-Interpretable-VAD)
-
-## Citation
-If you find this useful, please cite our paper:
-```
-@inproceedings{reiss2021panda,
-  title={PANDA: Adapting Pretrained Features for Anomaly Detection and Segmentation},
-  author={Reiss, Tal and Cohen, Niv and Bergman, Liron and Hoshen, Yedid},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
-  pages={2806--2814},
-  year={2021}
-}
-```
