@@ -20,11 +20,11 @@ from pretrain.utils import progress_bar
 
 
 if __name__ == '__main__':
-	model_path = Path(__file__).parent.parent/'ece740/models'
-	adversial_data_path = Path(__file__).parent.parent/'./ece740/auto_attack_gen_data'
-	data_path = Path(__file__).parent.parent/'datasets'
+	model_path = Path(__file__).parent/'models'
+	adversial_data_path = Path(__file__).parent/'auto_attack_gen_data'
+	data_path = Path(__file__).parent/'datasets'
 	parser = argparse.ArgumentParser(description='adversarial sample testing')
-	parser.add_argument('--dataset', '-d', default='cifar100')
+	parser.add_argument('--dataset', '-d', default='cifar10')
 	parser.add_argument('--norm', type=str, default='Linf')
 	parser.add_argument('--epsilon', type=float, default=8./255.)
 	parser.add_argument('--version', type=str, default='standard')
@@ -61,7 +61,6 @@ if __name__ == '__main__':
 	else:
 	    raise ValueError("Dataset name has to be 'cifar10' or 'cifar100' ")
 
-
 	ckpt = torch.load(args.model)
 	net.load_state_dict(ckpt['net']) #ckpt is a dict with ket 'net' storing the model weight parameters based on "pretrain.py"
 	net = net.to(device)
@@ -69,7 +68,6 @@ if __name__ == '__main__':
 
 
 	# load adversarial data
-	print(args.adversial_data)
 	item = torch.load(args.adversial_data)['adv_complete']
 	test_loader = data.DataLoader(item, batch_size=args.batch_size, shuffle=False, num_workers=4)
 	

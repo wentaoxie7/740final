@@ -5,3 +5,6 @@
 __pycache__/
 /anomaly_detection/RD4AD_models/*
 /anomaly_detection/CPRD_models/*
+/PANDA-master/data/*
+/PANDA-master/result/cifar10/model/*
+/PANDA-master/result/cifar100/model/*
