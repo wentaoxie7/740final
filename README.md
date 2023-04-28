@@ -273,11 +273,6 @@ pip install -r requirements.txt --find-links https://download.pytorch.org/whl/to
 ```
 
 ## Data Preparation
-Use the following commands:
-```
-cd PANDA-master
-mkdir data
-```
 
 Download:
 * [data](https://drive.google.com/drive/folders/1R3bJbU54o0hkusXUfdwIuNKWbyMaQquZ?usp=share_link) and [result](https://drive.google.com/drive/folders/1FTS1mfSGx9hLkfSLOQS0pqEqlcRYSw-Q?usp=share_link) folder and paste them under 'PANDA-master'
